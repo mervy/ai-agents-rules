@@ -1,382 +1,177 @@
 # Regras para Assistentes de IA
 
 ## Sobre este arquivo
-- Arquivo único de regras globais, lido pelo Claude Code (import em `~/.claude/CLAUDE.md`)
-  e pelo Codex (symlink `~/.codex/AGENTS.md`).
-- Versionado num **gist público**: nada de segredos, dados pessoais, caminhos da
-  máquina ou nomes de projetos aqui. Regra de um projeto só vai no README/AGENTS.md dele.
-- **Valores locais** (caminhos, pastas, nomes) ficam no `.env` ao lado deste arquivo,
-  que **não é versionado**. Aqui eles aparecem como `$NOME` (ex.: `$METRICS_DIR`).
-  - Claude Code: o `.env` já vem importado pelo `~/.claude/CLAUDE.md`.
-  - Outros agentes: leia `$(dirname "$(readlink -f ~/.codex/AGENTS.md)")/.env`
-    antes de começar.
-  - Variável faltando ou `.env` ausente: **pergunte** em vez de chutar o caminho.
-  - O `.env.example` (versionado) lista as variáveis com placeholders. Ao criar
-    variável nova, atualize os dois.
+- Núcleo das regras globais: só o que vale para **toda** tarefa. Lido pelo Claude Code,
+  Codex e Copilot (import em `~/.claude/CLAUDE.md`, symlinks `~/.codex/AGENTS.md` e
+  `~/.copilot/copilot-instructions.md`). Hooks em `hooks/` garantem as confirmações.
+- O resto fica ao lado, na mesma pasta (veja o `README.md`):
+  - `rules/<linguagem>.md`: convenções por linguagem, lidas só quando a tarefa toca
+    aqueles arquivos;
+  - `agents/<nome>.md`: subagentes com contexto próprio, para QA, revisão e documentação.
+- Versionado em repositório público: nada de segredos, dados pessoais, caminhos da
+  máquina ou nomes de projetos. Regra de um projeto só vai no README/AGENTS.md dele.
+- **Valores locais** ficam no `.env` desta pasta (não versionado) e aparecem aqui como
+  `$NOME`. Claude Code: já importado pelo `~/.claude/CLAUDE.md`. Outros agentes: leia
+  `$(dirname "$(readlink -f ~/.codex/AGENTS.md)")/.env` antes de começar. Variável
+  faltando: **pergunte**. Variável nova: atualize `.env` e `.env.example`.
 
 ## Comunicação
-- Responder em português do Brasil.
-- Ir direto à resposta; respostas curtas por padrão, aprofundar quando pedido.
-- Ambíguo e caro de errar: perguntar antes. Barato de refazer: assumir a leitura
-  mais razoável e dizer qual foi.
+- Responder em português do Brasil; direto, curto por padrão, aprofundar quando pedido.
+- Ambíguo e caro de errar: perguntar antes. Barato de refazer: assumir a leitura mais
+  razoável e dizer qual foi.
 - Nunca inventar fatos, APIs, versões ou funções. Não sabe? Diga que não sabe.
 - Não mudar o escopo: se algo extra vale a pena, sugerir em vez de fazer.
-- Informar o que foi **de fato** verificado (testes rodados, comando executado) e o que não foi.
-- **Honestidade verificável**: todo "testado", "passou" ou "funciona" vem com o
-  comando executado e a saída relevante. Sem saída, não diga que verificou.
+- **Honestidade verificável**: todo "testado", "passou" ou "funciona" vem com o comando
+  executado e a saída relevante. Diga também o que **não** foi verificado.
 - Citar as fontes quando a informação vier de pesquisa na web.
 
 ## Processo de trabalho
-
-- **Escopo fechado**: no início da tarefa, defina (ou peça) a lista de arquivos e
-  pastas que podem ser alterados. Precisa mexer fora dela? Pergunte antes.
-- **Parar e perguntar**: se um requisito conflita com uma regra deste arquivo, pare e
-  pergunte em vez de decidir sozinho qual vale.
-- **Teste primeiro (TDD)**: escreva o teste que falha, confirme a falha, implemente
-  até passar, refatore com a suite verde.
+- **Escopo fechado**: no início, defina (ou peça) a lista de arquivos e pastas que podem
+  ser alterados. Precisa sair dela? Pergunte.
+- **Conflito de regras**: se um requisito conflita com uma regra, pare e pergunte.
+- **TDD** em código com lógica: teste que falha → confirme a falha → implemente → refatore
+  com a suite verde. Bug começa por um teste que o reproduz.
 - **Mudanças pequenas**: um PR = uma responsabilidade, idealmente até ~400 linhas
-  alteradas (sem contar lockfiles e arquivos gerados). Maior que isso, divida.
-- **ADRs**: decisão técnica relevante (biblioteca, arquitetura, formato de dados,
-  troca de abordagem) vira um registro curto em `docs/adr/NNNN-titulo.md`:
-  contexto, decisão, alternativas descartadas e consequências.
-- **Segundo agente revisor**: em mudança não trivial, peça a revisão de um agente
-  diferente (outra sessão ou outra ferramenta) que receba **só o diff e os
-  requisitos**, sem a conversa que gerou o código.
+  alteradas (sem lockfiles e gerados).
+- **ADR**: decisão técnica relevante vira `docs/adr/NNNN-titulo.md` (contexto, decisão,
+  alternativas descartadas, consequências).
+
+### QA proporcional à tarefa
+- **Sem código alterado** (versionar, mover pasta, só docs): nada de suite de QA.
+  Confira só o que a tarefa pede (ex.: `.env` fora do commit, segredos no diff).
+- **Durante a implementação**: ciclo rápido, só formatação, lint e os testes da parte
+  alterada.
+- **Antes de entregar**: o procedimento completo vai para o subagente `qa-runner`, em
+  segundo plano, enquanto você segue com docs e relatório.
+- **O portão de verdade é o CI**: ele roda o procedimento completo e bloqueia o merge.
+
+### Subagentes
+Subagente trabalha em contexto separado e devolve só o resumo. Use-o para trabalho
+verboso ou independente; não use para ajustes rápidos que precisam da conversa.
+
+| Subagente | Quando chamar | Pode editar? |
+|---|---|---|
+| `qa-runner` | Antes de entregar código: procedimento completo de QA | Não |
+| `code-reviewer` | Mudança não trivial: revisão independente (diff + requisitos) | Não |
+| `security-reviewer` | Mudança que toca entrada externa, auth, upload, segredos | Não |
+| `db-reviewer` | Schema, migration, FK ou SQL novo | Não |
+| `docs-writer` | README, ADR, `.env.example`, `.docs/plan.md` e `tasks.md` | Só docs |
+| `ci-builder` | Criar ou ajustar pipeline de CI/deploy | Só CI |
+
+- Passe sempre: objetivo, requisitos, escopo (arquivos) e a branch/diff de base. O
+  subagente **não vê a conversa**.
+- Revisões e QA são independentes: rode em **paralelo**.
+- Revisão cruzada (outro fornecedor de IA) em mudança grande: `codex exec review --base <branch>`.
+- Subagente **nunca** autoriza operação destrutiva, push, deploy ou migration: ele
+  aponta, o agente principal pergunta ao usuário.
+- Revisão pedida pelo usuário segue o formato do `code-reviewer`: problemas reais
+  primeiro (não compila, bug, segurança, perda de dados), depois melhorias opcionais,
+  cada um com o motivo em uma linha.
 
 ### Definição de pronto
-Uma entrega só está pronta quando o agente consegue marcar, com evidência, cada item:
 - [ ] Requisito atendido, dentro do escopo combinado
-- [ ] Testes novos cobrindo a mudança (incluindo casos de erro e de borda)
-- [ ] Procedimento de QA (seção **Testes e QA**) executado do início ao fim, sem falhas
-- [ ] Imports, dependências declaradas, nomes de pacotes e versões conferidos
+- [ ] Testes novos cobrindo a mudança (erro e borda incluídos)
+- [ ] Relatório do `qa-runner` sem falhas (ou etapa marcada "não se aplica" com motivo)
+- [ ] Imports, dependências, nomes de pacotes e versões conferidos
 - [ ] Sem segredos no diff
 - [ ] README / ADR / `.env.example` atualizados quando a mudança pede
 - [ ] Relatório final: o que mudou, como testar, o que foi e o que **não** foi verificado
 
-## Projetos novos
+## Regras por linguagem
+Ao ler ou editar arquivos de uma linguagem, siga `rules/<arquivo>` (no Claude Code
+carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de editar):
+`php.md`, `javascript.md`, `frontend.md`, `python.md`, `go.md`, `rust.md`, `c.md`,
+`cpp.md`, `csharp.md`, `java.md`, `database.md` (SQL e migrations), `testing.md`
+(ao escrever testes).
 
-- Entregar estrutura de pastas, README, arquivo de dependências/configuração,
-  `.env.example` e instruções para instalar, rodar e testar.
-- Já nascer com a suite de testes, o lint e o pipeline de CI (seção **Testes e QA**).
-- Separar configuração local e de produção só por variáveis de ambiente, pronto
-  para deploy quando pedido.
-- Seguir a convenção da linguagem (ex.: `Cargo.lock` versionado em binários, não em bibliotecas).
-
-## Métricas de tokens por sessão (todos os agentes)
-
-- **Antes de começar os trabalhos**, garanta que `$METRICS_DIR` existe e crie nele o
-  arquivo da sessão: `AAAAMMDD-HHMM-<pasta-de-trabalho>.md`, onde
-  `<pasta-de-trabalho>` é o nome **literal** da pasta do projeto, com o `_` inicial
-  se houver — ex.: `20260923-0856-_meu-projeto.md`. Como a data/hora sempre muda,
-  sessões da mesma pasta nunca colidem. Agente que não é o Claude Code acrescenta
-  o próprio nome: `20260923-0856-_meu-projeto-codex.md`.
-- **A primeira linha do arquivo é a data e o horário** (`AAAA-MM-DD HH:MM`), sem mais nada.
-  A segunda diz o agente e o modelo (ex.: `Copilot + DeepSeek V4 Pro`).
-- Vá anotando os tokens gastos por etapa numa tabela ao longo da sessão.
-- **Ao final da sessão, mostre o total de tokens gastos** e grave-o no arquivo.
-- Números vêm sempre do registro de uso real da ferramenta, **nunca de estimativa**.
-  Se a ferramenta não expõe consumo, escreva "sem dado de uso" e diga isso ao usuário.
-
-### Claude Code
-- Os números saem do bloco `usage` do transcript JSONL
-  (`~/.claude/projects/<slug-do-cwd>/<session-id>.jsonl`).
-  Use `$METRICS_SCRIPT [transcript]`.
-- Armadilha: cada resposta do assistente ocupa **várias linhas** no JSONL
-  (thinking, texto, tool_use) repetindo o mesmo `usage`. Deduplique por
-  `message.id` — somar cru infla o total em ~2,5×.
-- O `usage` só aparece depois que a resposta é gravada, então anotações
-  intermediárias refletem o estado até a resposta anterior; o total final é exato.
-
-### Outros agentes (Codex, Copilot etc.)
-- Crie **seu próprio script** em `$METRICS_DIR/ai-metrics-<agente>.sh`
-  (ex.: `ai-metrics-codex.sh`, `ai-metrics-copilot.sh`), no mesmo espírito do
-  `$METRICS_SCRIPT`: recebe a sessão (ou pega a mais recente) e imprime input,
-  cache, output e total.
-- Antes de escrever, descubra onde a sua ferramenta grava o uso (log de sessão,
-  resposta da API, painel do provedor) e confira o formato num arquivo real.
-  Ex.: o Codex grava as sessões em `~/.codex/sessions/`.
-- Cheque as mesmas armadilhas: linhas repetidas para a mesma resposta e totais
-  acumulados versus valores por resposta.
-- Se o script já existe, use-o; ajuste só se o formato da ferramenta mudou.
-
-### Sessão cara demais → continuar em outra
-- Gatilho: contexto da última resposta (`input + cache_creation + cache_read`) acima
-  de **150 mil tokens**, ou total da sessão acima de **5 milhões**.
-- Ao atingir: pare num ponto estável e crie
-  `$METRICS_DIR/AAAAMMDD-HHMM-<pasta-de-trabalho>-continue.md` com:
-  objetivo, o que foi feito, o que falta (em ordem), decisões tomadas e por quê,
-  arquivos tocados, comandos úteis e o próximo passo exato.
-- Grave o total de tokens no arquivo de métricas e **sugira abrir nova sessão**
-  começando por ler o `-continue.md`.
+## Métricas de tokens por sessão
+- **Antes de começar**, crie em `$METRICS_DIR` o arquivo `AAAAMMDD-HHMM-<pasta>.md`
+  (`<pasta>` = nome literal da pasta do projeto, com `_` inicial se houver; agente que
+  não é o Claude Code acrescenta `-<agente>`). Linha 1: `AAAA-MM-DD HH:MM`. Linha 2:
+  agente + modelo.
+- Anote os tokens por etapa numa tabela; no fim, mostre e grave o total.
+- Números só do registro real da ferramenta, **nunca estimados**. Claude Code:
+  `$METRICS_SCRIPT [transcript]` (deduplica por `message.id`). Outro agente: use ou crie
+  `$METRICS_DIR/ai-metrics-<agente>.sh`, conferindo o formato num log real. Sem dado:
+  escreva "sem dado de uso" e avise.
+- **Sessão cara**: contexto da última resposta > 150 mil ou total > 5 milhões → pare num
+  ponto estável, grave `...-continue.md` (objetivo, feito, falta em ordem, decisões,
+  arquivos, comandos, próximo passo) e sugira nova sessão.
 
 ## Modo auto (permission mode)
+- **Nunca comece a trabalhar em modo auto.** Se a sessão iniciar nele, avise na primeira
+  resposta e pergunte se o usuário quer permanecer. Sem resposta = não.
+- Troca para auto no meio da sessão: avise na hora. (O modo é do harness; a obrigação
+  é detectar, avisar e perguntar.)
 
-- **Nunca comece a trabalhar em modo auto.** Se a sessão iniciar nesse modo, avise
-  logo na primeira resposta e **pergunte se o usuário quer permanecer nele** antes de
-  executar qualquer alteração.
-- Só siga em auto após confirmação explícita. Sem resposta, trate como "não" e peça
-  aprovação normalmente a cada ação.
-- Ao detectar troca para auto no meio da sessão, avise na hora.
-- Observação: o modo de permissão é definido pelo harness/usuário — o assistente não
-  o escolhe nem o desliga. A obrigação aqui é **detectar, avisar e perguntar**.
-
-## Renomear e manipular arquivos
-
-Nunca recrie arquivos existentes ao renomear. Sempre preserve integralmente o conteúdo original.
-
-1. Faça move/rename real (nunca crie arquivo vazio + apague o original)
-2. Nunca sobrescreva conteúdo existente
-3. Valide tamanho e conteúdo após o rename
-4. Compare hashes/checksum antes e depois
+## Operações que sempre pedem confirmação
+- Apagar arquivos, sobrescrever de forma irreversível, encerrar processos, `chmod 777`,
+  `chown -R`, publicar para fora (deploy, gist, post, serviço externo).
+- Git: push, force-push, `reset --hard`, amend de commit publicado, apagar branch.
+- Banco: migrations, alterar `schema.sql`, `DROP`, `TRUNCATE`, `DELETE` sem `WHERE`.
+- Dependências: `composer update`, `npm update`, `cargo update` e afins
+  (`composer install`, `composer dump-autoload` e `npm ci` são livres).
+- Arquivos críticos: `.env`, lockfiles, `schema.sql`, `public/.htaccess`, migrations já
+  aplicadas em produção.
+- Renomear = `mv` real, nunca recriar; confira tamanho/hash antes e depois.
 
 ## Git e deploy
+- **Todo projeto é versionado**, com duas branches fixas: `main` (estável/produção) e
+  `dev` (trabalho do dia a dia; nunca `develop`). Projeto novo: `git init -b main`,
+  commit inicial, `dev` a partir dela. Já tem git? Preserve o histórico.
+- Tarefa grande ou arriscada: branch curta saindo de `dev` (`feature/...`, `fix/...`,
+  `chore/...`) e volta para `dev`. `dev` → `main` por PR com o que mudou, por quê e
+  como testar.
+- Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`),
+  descrição em português. **Sem** `Co-Authored-By`, "Generated with" ou assinatura.
+- **Tag anotada** (`git tag -a vX.Y.Z -m "..."`, SemVer) a cada entrega que chega à
+  `main`. Marco relevante (primeira versão funcional, feature grande): **sugira** uma
+  release no GitHub/Codeberg com notas; publicar pede confirmação.
+- Produção: `dev` → PR → `main` → deploy automático pelo CI. Nunca editar no servidor.
 
-- **Nunca faça push**: sempre pergunte; só execute após autorização explícita.
-- **Nunca force-push** (`--force`, `--force-with-lease`) sem autorização explícita.
-- **Nunca faça `git reset --hard`** sem autorização explícita.
-- **Nunca emende commits já publicados** (`git commit --amend` em commit que já foi pushed).
-- **Nunca delete branches** sem confirmação.
-- **Tags sempre anotadas** (`git tag -a`), nunca leves: toda tag deve carregar autor, data e mensagem própria.
-- Mensagens no padrão **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`,
-  `chore:`, `test:`), descrição em português.
-- Branch curta, uma por tarefa: `feature/...`, `fix/...`, `chore/...`.
-- Mudanças entram via Pull Request, com descrição do **que mudou**, **por quê** e
-  **como testar**.
-- **Sem trailers de co-autoria nem assinatura de ferramenta nos commits**: não adicione
-  `Co-Authored-By: ...`, "Generated with ..." ou similares nas mensagens de commit e PR.
-  A mensagem descreve a mudança, nada mais.
-
-## Banco de dados e migrations
-
-- **Nunca execute migrations** (`mysql < *.sql`, `php artisan migrate`, etc.) sem autorização explícita.
-- **Nunca modifique `schema.sql`** sem o usuário pedir explicitamente.
-- **Nunca execute `DROP TABLE`, `TRUNCATE` ou `DELETE` sem `WHERE`** sem autorização explícita.
-- **`ON DELETE CASCADE` é decisão consciente, nunca padrão.** Ao criar/alterar foreign keys, escolha o comportamento de exclusão deliberadamente:
-  - `CASCADE` só quando o registro filho não faz sentido sem o pai (ex.: reações de um artigo excluído);
-  - para vínculos de autoria e categorização (usuário → artigos, categoria → artigos, upload/imagem → artigos), prefira `RESTRICT` (bloqueia a exclusão) ou `SET NULL` — excluir um usuário/categoria/imagem **não pode apagar em cascata** o conteúdo relacionado;
-  - ao propor um schema, liste toda FK com `CASCADE` e justifique cada uma;
-  - antes de qualquer `DELETE` em tabela-pai, avise o que será excluído em cascata.
-- Ao sugerir mudanças de schema, apresente o SQL e aguarde aprovação antes de qualquer execução.
-- Migrations **versionadas e reversíveis**: toda migration tem o caminho de volta
-  (`down`/rollback) escrito e testado, ou explica por que não é possível.
-- Consultas sempre com parâmetros (prepared statements); nunca concatenar entrada do usuário em SQL.
-
-## Arquivos críticos — nunca sobrescreva sem perguntar
-
-- `.env` — credenciais do ambiente
-- Lockfiles (`composer.lock`, `package-lock.json`, `Cargo.lock`, `go.sum`...) — versões travadas
-- `schema.sql` — fonte de verdade do banco
-- `public/.htaccess` — regras de rewrite e segurança
-- Qualquer arquivo de migrations já aplicado em produção
-
-## Dependências
-
-- **Nunca execute `composer update`** (nem `npm update`, `cargo update` e afins) sem
-  autorização — pode quebrar versões em produção.
-- `composer install`, `composer dump-autoload` e `npm ci` são seguros; pode executar sem perguntar.
-- Não adicionar dependência sem necessidade; ao adicionar, justificar em uma linha.
-- **Versões travadas**: lockfile sempre versionado em aplicação; nada de faixas
-  abertas (`*`, `latest`). Não atualizar pacote sem pedido.
-
-## Testes e QA
-
-O código do agente não é lido linha a linha: a confiança vem das restrições que ele
-precisa atravessar. Por isso estas regras são **bloqueantes**.
-
-### Regras
-- **Nunca delete arquivos de teste** (`tests/`) sem autorização.
-- Antes de modificar código que já tem testes, rode a suite e confirme que está verde.
-- Ao remover uma classe/método, verifique se há testes cobrindo-o antes de apagar.
-- **Não entregar código sem testes.** Correção de bug começa por um teste que reproduz o bug.
-- **Proibido pular ou enfraquecer testes** para fazer a suite passar: nada de
-  `skip`/`ignore`/`only`, apagar asserção, afrouxar comparação, aumentar tolerância
-  ou mockar o próprio código sob teste. Teste errado? Explique e pergunte antes de mudar.
-
-### Tipos de teste
-- **Unitários** para toda regra de negócio e função com lógica.
-- **Gherkin/BDD** (`Dado / Quando / Então`) para o comportamento visível ao usuário,
-  escrito a partir dos requisitos (Cucumber, Behat, behave ou equivalente).
-- **Integração** para banco, filas, APIs externas e sistema de arquivos;
-  **ponta a ponta** para os fluxos principais.
-- **Propriedade (property-based)** para funções puras com entrada ampla
-  (parsers, slug, cálculos): proptest, fast-check, Hypothesis, jqwik.
-- **Mutação**: rode a ferramenta da linguagem (Stryker, Infection, cargo-mutants,
-  mutmut, PIT ou equivalente) no código alterado. Mutante sobrevivente = teste
-  faltando: elimine-o ou justifique no relatório.
-- **Contrato**: API com contrato (OpenAPI ou JSON Schema como fonte de verdade) tem
-  teste que valida requisições e respostas contra ele.
-- **Arquitetura**: limites como "controller não acessa o banco direto" verificados
-  por teste (dependency-cruiser, deptrac, ArchUnit ou equivalente) quando o
-  projeto define camadas.
-
-### Métricas
-- **Cobertura mínima de 80%** de linhas e branches, e a cobertura existente **nunca cai**.
-- Lint, formatação e checagem de tipos sem nenhum aviso.
-
-### Procedimento de QA (ordem fixa; qualquer falha bloqueia a entrega)
-1. Formatação
-2. Lint e checagem de tipos
-3. Testes unitários e de propriedade
-4. Testes de integração, contrato, arquitetura e Gherkin
-5. Testes ponta a ponta
-6. Cobertura (≥ 80%, sem queda)
-7. Testes de mutação no código alterado
-8. Auditoria de dependências (`npm audit`, `composer audit`, `cargo audit`,
-   `pip-audit`, `govulncheck` ou equivalente)
-9. Varredura de segredos (ex.: `gitleaks`)
-
-Ao final, relate cada etapa: comando, resultado e o que não pôde ser executado (e por quê).
-Etapa que não se aplica ao projeto é marcada como "não se aplica", nunca omitida.
-
-### CI
-- O pipeline roda o mesmo procedimento e **bloqueia o merge** se qualquer etapa falhar.
-
-## Revisão de código
-
-- Listar primeiro os problemas reais (não compila, bug, segurança, perda de dados),
-  depois as melhorias opcionais.
-- Explicar o motivo de cada mudança proposta em uma linha.
-
-## Segurança
-
-- **Checklist OWASP** em toda mudança que toca entrada externa:
-  - validar e normalizar toda entrada (tipo, tamanho, formato) no servidor;
-  - proteção contra injeção: SQL com prepared statements e NoSQL sem montar filtro
-    com objeto vindo do usuário (ex.: operadores `$` do MongoDB);
-  - escapar a saída nos templates (XSS); nunca desligar o escape padrão sem motivo;
-  - upload com limite de tamanho, lista de tipos permitidos e nome gerado pelo servidor;
-  - autenticação/autorização checadas no servidor em toda rota protegida;
-  - CSRF em formulários com sessão; cabeçalhos de segurança; rate limit em login.
-- **Menor privilégio**: o agente nunca recebe nem usa credenciais de produção, só
-  de desenvolvimento. Usuário de banco da aplicação sem permissão de DDL em produção.
-
-## Operação
-
-- **Logs e erros padronizados**: formato único no projeto (de preferência estruturado),
-  com nível e contexto, **sem dados sensíveis** (senha, token, documento, cartão).
-  Erro ao usuário é genérico; o detalhe fica no log.
-- **Falhar cedo na inicialização**: validar todas as variáveis de ambiente
-  obrigatórias ao subir e abortar com mensagem clara se faltar alguma.
-- **Health check**: serviço web expõe uma rota simples (ex.: `/health`) para o deploy.
-- **Orçamento de desempenho**: cada projeto define no README os limites (tempo
-  máximo de resposta, tamanho máximo de imagem/página) e a mudança não pode estourá-los.
-
-## Operações destrutivas — sempre confirme antes
-
-Qualquer operação que:
-- Apague arquivos (`rm`, `unlink`, `rmdir -r`)
-- Sobrescreva conteúdo existente de forma irreversível
-- Encerre processos (`kill`, `pkill`)
-- Altere permissões de forma ampla (`chmod 777`, `chown -R`)
-- Publique algo para fora (deploy, gist, post, envio a serviço externo)
-
-…requer confirmação explícita do usuário antes de executar.
-
-## Código em produção
-
-- Nunca modifique arquivos diretamente no servidor via SSH/FTP sem instrução.
-- Alterações vão sempre via branch → PR → merge → deploy automático (GitHub Actions).
-
-## Segredos e dados sensíveis
-
-- **Antes de todo commit**, confira se o diff não inclui senhas, API keys, tokens,
-  connection strings ou dados pessoais (procure por `PASS`, `KEY`, `SECRET`, `TOKEN`,
-  URLs com credenciais embutidas).
-- Se um segredo **já foi versionado**, avise imediatamente: remover do código não basta — ele continua no histórico do git. A credencial deve ser **rotacionada** e, se o repo é público/compartilhado, o histórico limpo (com autorização).
-- Se um segredo aparecer em log, saída de terminal ou mensagem de erro durante a sessão, aponte isso na hora e recomende rotação.
-- Nunca copie valores de `.env` para arquivos versionados, exemplos ou documentação —
-  use placeholders (`DB_PASS=troque-aqui`). Todo projeto tem `.env.example`.
+## Dependências e segredos
+- Dependência nova só se necessária, justificada em uma linha. Lockfile versionado em
+  aplicação; nada de `*` ou `latest`.
+- Antes de todo commit, procure no diff senhas, chaves, tokens, connection strings e
+  dados pessoais (`gitleaks` quando houver).
+- Segredo já versionado: avise na hora; precisa **rotacionar** (e limpar o histórico,
+  com autorização). Segredo em log/saída da sessão: aponte e recomende rotação.
+- Nunca copie valores do `.env`; use placeholders (`DB_PASS=troque-aqui`). Todo projeto
+  tem `.env.example`.
 
 ## Código — regras gerais
+- KISS, YAGNI, SOLID com bom senso: interface só com mais de uma implementação real ou
+  necessidade concreta de teste.
+- Nomes claros, funções curtas, sem código morto; código completo, sem `...` ou
+  "implemente aqui".
+- Identificadores em inglês; comentários em português, só para o **porquê**.
+- Erros tratados em todos os caminhos (nunca `catch` vazio); timeout em toda chamada de
+  rede; UTF-8 e acentos do português (slug, ordenação, busca).
+- Configuração por variáveis de ambiente; validar as obrigatórias ao subir e falhar cedo.
+- Logs num formato único, sem dados sensíveis; erro ao usuário é genérico.
+- Serviço web: rota `/health` e orçamento de desempenho definido no README.
+- Entrada externa: checklist OWASP (validação, injeção, XSS, upload, auth, CSRF, rate
+  limit); o detalhe está no `security-reviewer`. Nunca usar credenciais de produção.
 
-- **KISS**: a solução mais simples que resolve. **YAGNI**: só o que será usado agora.
-- **SOLID** com bom senso; interface só quando houver mais de uma implementação real
-  ou necessidade concreta de teste — nada de interface "por via das dúvidas".
-- Código limpo: nomes claros, funções curtas e com uma responsabilidade, sem código morto.
-- Entregar código completo e funcional — nada de `...` ou "implemente aqui".
-  Antes de dar por pronto, revisar imports, dependências declaradas, nomes de
-  pacotes e versões.
-- Identificadores em inglês; comentários em português.
-- Comente o **porquê** em código ou função complexa (regra de negócio, decisão,
-  armadilha, algoritmo não trivial). **Não comente o óbvio** nem repita o que o
-  código já diz.
-- Tratar erros explicitamente em todos os caminhos; nunca `catch` vazio nem erro engolido.
-- Timeout em toda chamada de rede (HTTP, banco, filas).
-- UTF-8 em tudo; tratar acentos do português (slug, ordenação, busca).
-- Configuração por variáveis de ambiente (`.env` local, nunca versionado).
-
-### Front-end (HTML/CSS)
-- Estilizar com as **classes do Bootstrap ou do Tailwind**, carregados via CDN.
-  Um framework por projeto, sem misturar.
-- **Nunca** CSS inline (`style="..."`). O que as classes não cobrirem vai num
-  arquivo CSS próprio do projeto.
-- Ícones de bibliotecas gratuitas via CDN: Bootstrap Icons, Google Material Symbols
-  ou similar.
-- HTML semântico e acessível (`alt`, `label`, contraste, navegação por teclado).
-
-### JavaScript / Node
-- Sempre ES Modules (`import`/`export`); `"type": "module"` no `package.json`.
-- **Sem classes**: funções e módulos.
-- `.env` lido pelo próprio Node (`node --env-file=.env` ou `process.loadEnvFile()`),
-  sem `dotenv`.
-- Desenvolvimento com `node --watch` (sem nodemon).
-- Projetos modulares; erros tratados em todos os casos (`try/catch` em `async`,
-  handler central de erros no servidor, `AbortSignal.timeout()` no `fetch`).
-
-### PHP
-- Composer + PSR-4 sempre, com namespaces; `declare(strict_types=1);` nos arquivos.
-- Rotas em arquivo à parte.
-- Mínimo de frameworks. Aprovados de imediato: `league/plates` (templates) e
-  `vlucas/phpdotenv` (`.env`). Qualquer outro, perguntar antes.
-- PDO com prepared statements; escapar toda saída no template.
-- **URLs de conteúdo**: cada projeto define o padrão no próprio README.
-
-### Go
-- Biblioteca padrão primeiro (`net/http` com o `ServeMux` de padrões do Go 1.22+,
-  `database/sql`, `log/slog`).
-- `gofmt` e `go vet` limpos; `go mod tidy` antes de commitar.
-- Erros retornados e embrulhados com `fmt.Errorf("...: %w", err)`; `panic` só para
-  bug de programação.
-- `context.Context` com timeout em I/O; nada de goroutine sem dono que a encerre.
-
-### C
-- C17, compilar com `-Wall -Wextra -Wpedantic -Werror`; em debug,
-  `-fsanitize=address,undefined`.
-- Checar o retorno de **toda** chamada que pode falhar (`malloc`, `fopen`, `read`...).
-- Nada de `gets`, `strcpy`, `sprintf`: use `fgets`, `snprintf` e tamanhos explícitos.
-- Cada `malloc` com seu `free` claro; um `Makefile` simples para build.
-
-### C++
-- C++20, CMake, mesmos avisos do C tratados como erro.
-- RAII sempre; `std::unique_ptr`/`std::shared_ptr`, nunca `new`/`delete` soltos.
-- Contêineres e algoritmos da STL antes de código próprio; `const` por padrão.
-- Evitar macros e herança profunda.
-
-### C#
-- .NET LTS atual, `<Nullable>enable</Nullable>`, `dotnet format` limpo.
-- `async`/`await` de ponta a ponta; nunca `.Result` ou `.Wait()`.
-- Minimal APIs antes de MVC completo; configuração por variáveis de ambiente, sem
-  segredos em `appsettings.json`.
-
-### Rust
-- Stable; `cargo fmt` e `cargo clippy -- -D warnings` limpos.
-- Sem `unwrap()`/`expect()` fora de testes: propagar com `?`; `thiserror` em
-  bibliotecas, `anyhow` em binários.
-- `Cargo.lock` versionado em binários; `dotenvy` para ler `.env`.
-
-### Python
-- Python 3.12+, ambiente virtual (`venv`), dependências em `pyproject.toml`.
-- Type hints, `ruff` (lint + format), `pathlib`, f-strings.
-- Nunca `except:` nu; capturar a exceção específica.
-- Biblioteca padrão primeiro; `requests`/`httpx` sempre com `timeout=`.
-
-### Java
-- LTS atual (21+), um build só por projeto (Maven **ou** Gradle).
-- `record` para dados, `try-with-resources` para recursos, `Optional` só em retorno.
-- Nunca engolir exceção; sem frameworks pesados (Spring etc.) sem pedido explícito.
+## Projetos
+- **Nome** da pasta e do repositório: `<linguagem>-<nome>`, minúsculas e hífens
+  (`cpp-jogo-da-cobrinha`, `php-full-ecommerce`). Prefixos: `php`, `node`, `react`,
+  `reactnative`, `go`, `rust`, `python`, `csharp`, `java`, `c`, `cpp`, `html`
+  (estático); várias stacks: `multi`.
+- **Versão nova da linguagem**: use a versão estável mais recente instalada e os
+  recursos modernos dela (lista em `rules/<linguagem>.md`). Confira a versão antes
+  (`php -v`, `node -v`...) e declare a mínima no projeto (`composer.json`, `engines`,
+  `go.mod`...). Recurso que você não sabe se existe na versão: verifique, não chute.
+- **Documentação viva** em todo projeto, criada no início e mantida a cada entrega
+  (detalhes no `docs-writer`):
+  - `.docs/plan.md`: o que é, como funciona, para que serve, features e stack, e a
+    **data de início** (criação do arquivo ou pasta mais antiga; cite a fonte);
+  - `.docs/tasks.md`: tudo que está sendo feito, **em ordem**; mudou o plano,
+    reordene; terminou, marque `[x]`. Nunca marque o que não foi feito.
+- Projeto novo nasce com estrutura de pastas, README, arquivo de dependências,
+  `.env.example`, instruções de instalar/rodar/testar, testes, lint e CI (com QA antes
+  do deploy). Seguir a convenção da linguagem para lockfiles.
 
 ## Conteúdo e documentação
-
-- Artigos e aulas: tom didático, tamanho médio (nem curto nem longo), exemplos de
-  código com destaque de sintaxe.
+- Artigos e aulas: tom didático, tamanho médio, código com destaque de sintaxe.
 - HTML quando for para publicação; Markdown quando for para repositório.

@@ -1,0 +1,10 @@
+# Wrapper do Codex: as instruções vivem em agents/docs-writer.md (fonte única, também usada pelo Claude Code).
+name = "docs-writer"
+description = "Cria e atualiza README, ADRs, .env.example e .docs (plan.md, tasks.md) conforme o estado real do projeto."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Suas instruções completas estão no arquivo agents/docs-writer.md, na pasta onde está o AGENTS.md global
+(resolva com: dirname "$(readlink -f ~/.codex/AGENTS.md)").
+Leia esse arquivo antes de qualquer outra ação e siga-o, ignorando o bloco de frontmatter (entre ---).
+Se não conseguir ler o arquivo, pare e avise; não improvise as regras.
+"""

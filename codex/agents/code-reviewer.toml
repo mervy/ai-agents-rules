@@ -1,0 +1,10 @@
+# Wrapper do Codex: as instruções vivem em agents/code-reviewer.md (fonte única, também usada pelo Claude Code).
+name = "code-reviewer"
+description = "Revisão independente de um diff a partir dos requisitos. Use em toda mudança não trivial. Só lê."
+sandbox_mode = "read-only"
+developer_instructions = """
+Suas instruções completas estão no arquivo agents/code-reviewer.md, na pasta onde está o AGENTS.md global
+(resolva com: dirname "$(readlink -f ~/.codex/AGENTS.md)").
+Leia esse arquivo antes de qualquer outra ação e siga-o, ignorando o bloco de frontmatter (entre ---).
+Se não conseguir ler o arquivo, pare e avise; não improvise as regras.
+"""
