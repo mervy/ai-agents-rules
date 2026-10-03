@@ -24,18 +24,23 @@ instalar, rodar e testar (comandos copiáveis), URL local, URL remota e URL do
 repositório quando existirem, orçamento de desempenho e links para `.docs/`.
 
 ### Data de início
-Procure a primeira data real, nesta ordem, e cite a fonte: primeiro commit
-(`git log --all --reverse --format='%ad' | head -1`), datas em conversas/exports
-dentro do projeto, `mtime` mais antigo (fora `vendor`/`node_modules`). Divergiram?
-Fique com a mais antiga e cite as outras. Sem fonte confiável: pergunte.
+É a data do **primeiro arquivo ou pasta criados** no projeto. Levante todas e fique
+com a mais antiga, citando a fonte (e as outras, se divergirem):
+- criação da pasta no Windows: `powershell.exe "(Get-Item '<caminho-windows>').CreationTime"`;
+- arquivo mais antigo (fora `.git`, `vendor`, `node_modules`):
+  `find . -path ./.git -prune -o -path '*/vendor' -prune -o -path '*/node_modules' -prune -o -type f -printf '%T+ %p\n' | sort | head -1`
+  (ignore 1985-10-26, data falsa de pacote npm);
+- primeiro commit, como conferência: `git log --all --reverse --format='%ad' | head -1`.
+Sem fonte confiável: pergunte. Data já registrada no `plan.md`: não troque.
 
 ## `.docs/` (crie se não existir)
-- `plan.md`: começa com a data de início; objetivo, requisitos, escopo e o que fica
-  fora, stack, arquitetura, dados, URLs e decisões (inclusive as rejeitadas, com o
-  porquê).
-- `tasks.md`: etapas em ordem cronológica com checklist `[ ]`/`[x]`, o que foi feito,
-  arquivos afetados, verificações rodadas e pendências. Nunca marque `[x]` no que não
-  foi feito.
+- `plan.md`: começa com a data de início; o que é, como funciona, para que serve,
+  features, stack e versão da linguagem, requisitos, escopo e o que fica fora,
+  arquitetura, dados, URLs e decisões (inclusive as rejeitadas, com o porquê).
+- `tasks.md`: **tudo** que está sendo feito, na ordem de execução, com checklist
+  `[ ]`/`[x]`. Quando o plano muda, **reordene** as pendentes (as feitas ficam onde
+  estão). Ao concluir, marque `[x]` com data, arquivos afetados e a verificação
+  rodada. Nunca marque `[x]` no que não foi feito.
 
 ## ADR
 `docs/adr/NNNN-titulo-em-kebab.md`, numeração sequencial: contexto, decisão,

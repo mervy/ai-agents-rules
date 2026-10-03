@@ -18,3 +18,16 @@ paths:
 - Erros tratados em todos os casos: `try/catch` em `async`, handler central no
   servidor, `AbortSignal.timeout()` em todo `fetch`.
 - Scripts `test`, `lint` e `format` no `package.json`; CI usa `npm ci`.
+
+## Recursos modernos (Node 26 instalado)
+Declare `"engines": { "node": ">=24" }` e prefira o que já vem no Node a pacotes:
+- `.env`: `node --env-file=.env` ou `process.loadEnvFile()`; reload: `node --watch`
+  (`--watch-path` para pastas); scripts com `node --run <script>`.
+- Testes: `node --test` (com `--watch` e `--experimental-test-coverage`); `fetch`,
+  `AbortSignal.timeout()` e `structuredClone()` globais; `import.meta.dirname`.
+- CLI e terminal: `util.parseArgs()`, `util.styleText()` (sem chalk/yargs).
+- Linguagem: `Object.groupBy()`, `toSorted()`/`toReversed()`/`with()`,
+  `Promise.withResolvers()`, métodos de `Set` (`union`, `intersection`), iterator
+  helpers, `using` só se a versão suportar.
+- `node:sqlite` para SQLite sem dependência: confira antes com
+  `node -e "import('node:sqlite').then(()=>console.log('ok'))"`.

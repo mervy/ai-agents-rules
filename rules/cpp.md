@@ -6,7 +6,12 @@ paths:
 
 # C++
 
-- C++20, CMake, mesmos avisos do C tratados como erro.
+- **C++23** (`-std=c++23`), CMake, mesmos avisos do C tratados como erro.
 - RAII sempre; `std::unique_ptr`/`std::shared_ptr`, nunca `new`/`delete` soltos.
 - Contêineres e algoritmos da STL antes de código próprio; `const` por padrão.
 - Evitar macros e herança profunda.
+
+## Recursos modernos (C++23, GCC 14 instalado)
+`std::print`/`std::println` em vez de `iostream`/`printf`, `std::expected` para erros
+sem exceção, `std::ranges::to`, *deducing this*, `std::format`, ranges e `views`,
+`constexpr` e `consteval`. Módulos: só quando o build estiver pronto para eles.

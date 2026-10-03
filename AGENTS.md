@@ -115,11 +115,18 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
 - Renomear = `mv` real, nunca recriar; confira tamanho/hash antes e depois.
 
 ## Git e deploy
+- **Todo projeto é versionado**, com duas branches fixas: `main` (estável/produção) e
+  `dev` (trabalho do dia a dia; nunca `develop`). Projeto novo: `git init -b main`,
+  commit inicial, `dev` a partir dela. Já tem git? Preserve o histórico.
+- Tarefa grande ou arriscada: branch curta saindo de `dev` (`feature/...`, `fix/...`,
+  `chore/...`) e volta para `dev`. `dev` → `main` por PR com o que mudou, por quê e
+  como testar.
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`),
   descrição em português. **Sem** `Co-Authored-By`, "Generated with" ou assinatura.
-- Branch curta por tarefa (`feature/...`, `fix/...`, `chore/...`); entra por PR com o que
-  mudou, por quê e como testar. Tags sempre anotadas (`git tag -a`).
-- Produção: branch → PR → merge → deploy automático pelo CI. Nunca editar no servidor.
+- **Tag anotada** (`git tag -a vX.Y.Z -m "..."`, SemVer) a cada entrega que chega à
+  `main`. Marco relevante (primeira versão funcional, feature grande): **sugira** uma
+  release no GitHub/Codeberg com notas; publicar pede confirmação.
+- Produção: `dev` → PR → `main` → deploy automático pelo CI. Nunca editar no servidor.
 
 ## Dependências e segredos
 - Dependência nova só se necessária, justificada em uma linha. Lockfile versionado em
@@ -145,10 +152,24 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
 - Entrada externa: checklist OWASP (validação, injeção, XSS, upload, auth, CSRF, rate
   limit); o detalhe está no `security-reviewer`. Nunca usar credenciais de produção.
 
-## Projetos novos
-- Estrutura de pastas, README, arquivo de dependências, `.env.example`, instruções de
-  instalar/rodar/testar, testes, lint e CI (com QA antes do deploy) desde o primeiro
-  commit. Seguir a convenção da linguagem para lockfiles.
+## Projetos
+- **Nome** da pasta e do repositório: `<linguagem>-<nome>`, minúsculas e hífens
+  (`cpp-jogo-da-cobrinha`, `php-full-ecommerce`). Prefixos: `php`, `node`, `react`,
+  `reactnative`, `go`, `rust`, `python`, `csharp`, `java`, `c`, `cpp`, `html`
+  (estático); várias stacks: `multi`.
+- **Versão nova da linguagem**: use a versão estável mais recente instalada e os
+  recursos modernos dela (lista em `rules/<linguagem>.md`). Confira a versão antes
+  (`php -v`, `node -v`...) e declare a mínima no projeto (`composer.json`, `engines`,
+  `go.mod`...). Recurso que você não sabe se existe na versão: verifique, não chute.
+- **Documentação viva** em todo projeto, criada no início e mantida a cada entrega
+  (detalhes no `docs-writer`):
+  - `.docs/plan.md`: o que é, como funciona, para que serve, features e stack, e a
+    **data de início** (criação do arquivo ou pasta mais antiga; cite a fonte);
+  - `.docs/tasks.md`: tudo que está sendo feito, **em ordem**; mudou o plano,
+    reordene; terminou, marque `[x]`. Nunca marque o que não foi feito.
+- Projeto novo nasce com estrutura de pastas, README, arquivo de dependências,
+  `.env.example`, instruções de instalar/rodar/testar, testes, lint e CI (com QA antes
+  do deploy). Seguir a convenção da linguagem para lockfiles.
 
 ## Conteúdo e documentação
 - Artigos e aulas: tom didático, tamanho médio, código com destaque de sintaxe.
