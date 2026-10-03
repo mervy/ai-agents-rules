@@ -1,0 +1,10 @@
+# Wrapper do Codex: as instruções vivem em agents/ci-builder.md (fonte única, também usada pelo Claude Code).
+name = "ci-builder"
+description = "Cria ou ajusta GitHub Actions para o QA rodar antes do deploy. Edita só CI; nunca faz push nem deploy."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Suas instruções completas estão no arquivo agents/ci-builder.md, na pasta onde está o AGENTS.md global
+(resolva com: dirname "$(readlink -f ~/.codex/AGENTS.md)").
+Leia esse arquivo antes de qualquer outra ação e siga-o, ignorando o bloco de frontmatter (entre ---).
+Se não conseguir ler o arquivo, pare e avise; não improvise as regras.
+"""

@@ -1,0 +1,10 @@
+# Wrapper do Codex: as instruções vivem em agents/db-reviewer.md (fonte única, também usada pelo Claude Code).
+name = "db-reviewer"
+description = "Revisa schema, migrations, FKs e SQL. Use antes de aplicar migration. Nunca executa SQL."
+sandbox_mode = "read-only"
+developer_instructions = """
+Suas instruções completas estão no arquivo agents/db-reviewer.md, na pasta onde está o AGENTS.md global
+(resolva com: dirname "$(readlink -f ~/.codex/AGENTS.md)").
+Leia esse arquivo antes de qualquer outra ação e siga-o, ignorando o bloco de frontmatter (entre ---).
+Se não conseguir ler o arquivo, pare e avise; não improvise as regras.
+"""
