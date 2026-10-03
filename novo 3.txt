@@ -1,0 +1,9 @@
+## Documentação contínua do projeto
+
+- Todo projeto mantém `.docs/plan.md` e `.docs/tasks.md`.
+- Se `.docs/` ou esses arquivos não existirem, crie-os ao iniciar trabalho no projeto.
+- `plan.md` começa com a data de início do projeto e mantém a descrição, objetivo, escopo, requisitos e restrições relevantes atualizados.
+- `tasks.md` é o registro cronológico do trabalho efetivamente realizado. Atualize-o conforme etapas relevantes forem concluídas; nunca marque como realizado o que não foi executado.
+- Preserve a data de início existente. Se ela não puder ser determinada com segurança, pergunte em vez de inventá-la.
+- O README mantém, quando existentes e verificáveis, a data de início do projeto, URL local, URL remota e URL do repositório.
+- Alteração que muda instalação, execução, configuração, interface pública ou operação deve atualizar a documentação correspondente na mesma entrega.
