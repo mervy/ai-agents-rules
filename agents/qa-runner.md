@@ -2,7 +2,6 @@
 name: qa-runner
 description: Executa o procedimento completo de QA (formatação, lint, testes, cobertura, mutação, auditoria, segredos) e devolve uma tabela com a evidência de cada etapa. Use antes de entregar código, de preferência em segundo plano, em paralelo com as revisões. Não corrige nada.
 tools: Read, Grep, Glob, Bash
-model: sonnet
 background: true
 color: green
 ---

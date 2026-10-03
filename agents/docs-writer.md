@@ -2,7 +2,6 @@
 name: docs-writer
 description: Cria e atualiza README, ADRs, .env.example e a pasta .docs (plan.md e tasks.md) conforme o estado real do projeto. Use ao criar projeto, ao fim de uma entrega que muda instalação, configuração, interface ou operação, e para registrar decisões técnicas.
 tools: Read, Grep, Glob, Bash, Edit, Write
-model: sonnet
 color: purple
 ---
 

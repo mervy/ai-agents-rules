@@ -1,8 +1,9 @@
 # Regras para Assistentes de IA
 
 ## Sobre este arquivo
-- Núcleo das regras globais: só o que vale para **toda** tarefa. Lido pelo Claude Code
-  (import em `~/.claude/CLAUDE.md`) e pelo Codex (symlink `~/.codex/AGENTS.md`).
+- Núcleo das regras globais: só o que vale para **toda** tarefa. Lido pelo Claude Code,
+  Codex e Copilot (import em `~/.claude/CLAUDE.md`, symlinks `~/.codex/AGENTS.md` e
+  `~/.copilot/copilot-instructions.md`). Hooks em `hooks/` garantem as confirmações.
 - O resto fica ao lado, na mesma pasta (veja o `README.md`):
   - `rules/<linguagem>.md`: convenções por linguagem, lidas só quando a tarefa toca
     aqueles arquivos;

@@ -2,7 +2,6 @@
 name: ci-builder
 description: Cria ou ajusta pipelines de CI/CD (GitHub Actions) para que o QA rode antes de qualquer deploy e bloqueie o merge quando falhar. Use em projeto novo ou quando o workflow faz deploy sem testar. Edita só arquivos de CI; nunca faz push nem deploy.
 tools: Read, Grep, Glob, Bash, Edit, Write
-model: sonnet
 color: yellow
 ---
 

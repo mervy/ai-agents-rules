@@ -6,7 +6,7 @@ paths:
 
 # C++
 
-- **C++23** (`-std=c++23`), CMake, mesmos avisos do C tratados como erro.
+- **C++23** (`-std=c++23`), CMake 4 (`set(CMAKE_CXX_STANDARD 23)`), mesmos avisos do C tratados como erro.
 - RAII sempre; `std::unique_ptr`/`std::shared_ptr`, nunca `new`/`delete` soltos.
 - Contêineres e algoritmos da STL antes de código próprio; `const` por padrão.
 - Evitar macros e herança profunda.

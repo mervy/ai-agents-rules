@@ -7,20 +7,20 @@ para gastar menos contexto e rodar trabalho pesado (QA, revisão) em paralelo.
 |---|---|---|
 | **Núcleo** | `AGENTS.md` | Sempre, em toda sessão (~150 linhas) |
 | **Regras por linguagem** | `rules/*.md` | Só quando a tarefa lê/edita arquivos daquele tipo |
-| **Subagentes** | `agents/*.md` (Claude) e `codex/agents/*.toml` (Codex) | Quando o agente principal delega; rodam em contexto próprio |
+| **Subagentes** | `agents/*.md` (Claude Code e Copilot) e `codex/agents/*.toml` (Codex) | Quando o agente principal delega; rodam em contexto próprio |
 
 A decisão e as alternativas estão em [docs/adr/0001-nucleo-regras-e-subagentes.md](docs/adr/0001-nucleo-regras-e-subagentes.md).
 
 ## Subagentes
 
-| Nome | Faz | Edita? | Modelo (Claude) |
-|---|---|---|---|
-| `qa-runner` | Procedimento de QA em 9 etapas, com tabela de evidências | Não | sonnet, em segundo plano |
-| `code-reviewer` | Revisão independente do diff contra os requisitos | Não | o da sessão |
-| `security-reviewer` | OWASP, segredos, autorização, uploads | Não | o da sessão |
-| `db-reviewer` | Schema, migrations, FKs, SQL; nunca executa | Não | o da sessão |
-| `docs-writer` | README, ADR, `.env.example`, `.docs/plan.md` e `tasks.md` | Só docs | sonnet |
-| `ci-builder` | GitHub Actions com QA antes do deploy | Só CI | sonnet |
+| Nome | Faz | Edita? |
+|---|---|---|
+| `qa-runner` | Procedimento de QA em 9 etapas, com tabela de evidências | Não |
+| `code-reviewer` | Revisão independente do diff contra os requisitos | Não |
+| `security-reviewer` | OWASP, segredos, autorização, uploads | Não |
+| `db-reviewer` | Schema, migrations, FKs, SQL; nunca executa | Não |
+| `docs-writer` | README, ADR, `.env.example`, `.docs/plan.md` e `tasks.md` | Só docs |
+| `ci-builder` | GitHub Actions com QA antes do deploy | Só CI |
 
 Fluxo típico de uma entrega:
 
@@ -43,6 +43,24 @@ contrário):
 codex exec review --base main "Requisitos: <cole aqui>"
 ```
 
+Os subagentes não fixam modelo: usam o da sessão. No Claude Code, o modelo escolhido; no
+Copilot (VS Code), o do seletor, por exemplo o DeepSeek V4 Pro. O Copilot lê
+`~/.claude/agents` direto e traduz os nomes das ferramentas.
+
+## Hooks (regras que não dependem da boa vontade do modelo)
+
+`hooks/guard.py` roda antes de cada comando do Claude Code (PreToolUse) e vigia:
+push, `reset --hard`, apagar branch, `git clean`, amend, `rm -r`, `update` de
+dependências, migrations, `DROP`/`TRUNCATE`/`DELETE` sem `WHERE`, `chmod 777`,
+`chown -R`, `kill`, publicação com `gh`, e edição de `.env`.
+
+- Modo padrão: o Claude Code **pergunta** antes de executar.
+- Outros modos (auto, acceptEdits...): **nega** e pede que você rode o comando com `!`,
+  porque nesses modos uma pergunta não chega até você.
+- `.env` no `git add` ou no stage de um commit: **nega sempre**.
+
+Testes: `python3 -m unittest discover hooks`.
+
 ## Instalação
 
 Esta pasta é a fonte única; as ferramentas apontam para ela por symlink.
@@ -54,6 +72,13 @@ DIR=/caminho/para/esta/pasta
 mkdir -p ~/.claude/agents ~/.claude/rules
 ln -s "$DIR"/agents/*.md ~/.claude/agents/
 ln -s "$DIR"/rules/*.md  ~/.claude/rules/
+mkdir -p ~/.claude/hooks && ln -s "$DIR/hooks/guard.py" ~/.claude/hooks/guard.py
+# e no ~/.claude/settings.json:
+# "hooks": {"PreToolUse": [{"matcher": "Bash|Edit|Write|MultiEdit",
+#   "hooks": [{"type": "command", "command": "python3 ~/.claude/hooks/guard.py"}]}]}
+
+# Copilot (VS Code): lê ~/.claude/agents; o núcleo vai como instrução global
+ln -sf "$DIR/AGENTS.md" ~/.copilot/copilot-instructions.md
 
 # Codex: núcleo + subagentes
 ln -sf "$DIR/AGENTS.md" ~/.codex/AGENTS.md
