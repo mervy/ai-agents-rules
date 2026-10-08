@@ -26,7 +26,13 @@ RISKY_PATTERNS: list[tuple[str, str]] = [
     ),
     (r"\bartisan\s+migrate\b", "executar migration"),
     (r"\b(mysql|mariadb|psql)\b.*<\s*\S+\.sql\b", "executar SQL de arquivo no banco"),
-    (r"\b(DROP|TRUNCATE)\s+(TABLE|DATABASE|SCHEMA)?\b", "DROP/TRUNCATE no banco"),
+    # Exige o objeto SQL: "drop" sozinho aparece no trait Drop do Rust e em prosa.
+    (
+        r"\bDROP\s+(TABLE|DATABASE|SCHEMA|INDEX|VIEW|MATERIALIZED|SEQUENCE|TYPE"
+        r"|FUNCTION|PROCEDURE|TRIGGER|COLUMN|CONSTRAINT|USER|ROLE|OWNED)\b",
+        "DROP no banco",
+    ),
+    (r"\bTRUNCATE\s+(TABLE\s+)?(ONLY\s+)?[\"`\w.]+", "TRUNCATE no banco"),
     (r"\bchmod\s+(-\w+\s+)*0?777\b", "permissão 777"),
     (r"\bchown\s+(-\w*R\w*)\b", "chown recursivo"),
     (r"\b(kill|pkill|killall)\b", "encerrar processo"),
@@ -64,7 +70,7 @@ def risky_reason(command: str) -> str | None:
     for segment in SEGMENT_SPLIT.split(command):
         for pattern, reason in RISKY_PATTERNS:
             # SQL vem em qualquer caixa; comandos de shell, só minúsculos.
-            flags = re.IGNORECASE if "DROP" in pattern else 0
+            flags = re.IGNORECASE if "DROP" in pattern or "TRUNCATE" in pattern else 0
             if re.search(pattern, segment, flags):
                 return reason
     if DELETE_WITHOUT_WHERE.search(command):

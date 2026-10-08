@@ -67,6 +67,10 @@ RISKY_COMMANDS = [
     "mysql -u root app < schema.sql",
     "mysql -e 'DROP TABLE users'",
     "psql -c 'TRUNCATE posts'",
+    "psql -c 'truncate table posts'",
+    "psql -c 'drop database bitwise'",
+    "mysql -e 'DROP INDEX idx_slug ON posts'",
+    "psql -c 'ALTER TABLE posts DROP COLUMN body'",
     "mysql -e 'DELETE FROM users'",
     "chmod 777 public",
     "chown -R www-data .",
@@ -89,6 +93,11 @@ SAFE_COMMANDS = [
     "ls -la",
     "echo pushing",
     "grep -r reset src",
+    # "drop"/"truncate" fora de SQL: trait e métodos do Rust, texto, utilitário de shell
+    "cat > c1.rs <<'EOF'\nimpl Drop for Comanda {\n    fn drop(&mut self) {}\n}\nEOF",
+    "echo 'o hook bloqueia DROP no modo auto'",
+    "grep -n 'v.truncate(3)' src/main.rs",
+    "truncate -s 0 app.log",
 ]
 
 
