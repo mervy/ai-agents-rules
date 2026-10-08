@@ -94,7 +94,7 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
   `$METRICS_SCRIPT [transcript]` (deduplica por `message.id`). Outro agente: use ou crie
   `$METRICS_DIR/ai-metrics-<agente>.sh`, conferindo o formato num log real. Sem dado:
   escreva "sem dado de uso" e avise.
-- **Sessão cara**: contexto da última resposta > 150 mil ou total > 5 milhões → pare num
+- **Sessão cara**: contexto da última resposta > 150 mil ou total > 10 milhões → pare num
   ponto estável, grave `...-continue.md` (objetivo, feito, falta em ordem, decisões,
   arquivos, comandos, próximo passo) e sugira nova sessão.
 
