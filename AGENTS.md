@@ -33,7 +33,7 @@
   com a suite verde. Bug começa por um teste que o reproduz.
 - **Mudanças pequenas**: um PR = uma responsabilidade, idealmente até ~400 linhas
   alteradas (sem lockfiles e gerados).
-- **ADR**: decisão técnica relevante vira `docs/adr/NNNN-titulo.md` (contexto, decisão,
+- **ADR**: decisão técnica relevante vira `.docs/adr/NNNN-titulo.md` (contexto, decisão,
   alternativas descartadas, consequências).
 
 ### QA proporcional à tarefa
@@ -94,7 +94,7 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
   `$METRICS_SCRIPT [transcript]` (deduplica por `message.id`). Outro agente: use ou crie
   `$METRICS_DIR/ai-metrics-<agente>.sh`, conferindo o formato num log real. Sem dado:
   escreva "sem dado de uso" e avise.
-- **Sessão cara**: contexto da última resposta > 150 mil ou total > 5 milhões → pare num
+- **Sessão cara**: contexto da última resposta > 150 mil ou total > 10 milhões → pare num
   ponto estável, grave `...-continue.md` (objetivo, feito, falta em ordem, decisões,
   arquivos, comandos, próximo passo) e sugira nova sessão.
 
@@ -119,9 +119,19 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
 - **Todo projeto é versionado**, com duas branches fixas: `main` (estável/produção) e
   `dev` (trabalho do dia a dia; nunca `develop`). Projeto novo: `git init -b main`,
   commit inicial, `dev` a partir dela. Já tem git? Preserve o histórico.
-- Tarefa grande ou arriscada: branch curta saindo de `dev` (`feature/...`, `fix/...`,
-  `chore/...`) e volta para `dev`. `dev` → `main` por PR com o que mudou, por quê e
-  como testar.
+- **Toda mudança**, mesmo pequena (fix, docs, ajuste de config), vai numa branch curta
+  saindo de `dev` (`feature/...`, `fix/...`, `chore/...`, `docs/...`) e volta para
+  `dev`; nada de commit direto em `dev` ou `main` (exceção: o commit inicial do
+  projeto). `dev` → `main` por PR com o que mudou, por quê e como testar.
+- **Preservar ramificações no histórico**: toda integração entre branches
+  (`feature/*`, `fix/*`, `chore/*` → `dev` e `dev` → `main`) deve criar um commit
+  de merge quando houver commits novos a integrar. Em merges locais, usar
+  `git merge --no-ff <branch>`; não usar fast-forward, squash ou rebase para integrar.
+  No GitHub, usar **Create a merge commit**; configurar o repositório para permitir
+  merge commits e desabilitar squash/rebase merging, sem exigir histórico linear.
+  Alterar configurações remotas continua sujeito à confirmação do usuário.
+  Conferir com `git log --graph --oneline --decorate --all` e
+  `git log --merges --oneline`. Não reescrever histórico antigo para mudar o desenho.
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`),
   descrição em português. **Sem** `Co-Authored-By`, "Generated with" ou assinatura.
 - **Tag anotada** (`git tag -a vX.Y.Z -m "..."`, SemVer) a cada entrega que chega à
