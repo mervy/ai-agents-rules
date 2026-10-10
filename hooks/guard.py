@@ -7,6 +7,7 @@ o fluxo do modo), então negamos e orientamos o usuário a rodar o comando ele m
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -66,6 +67,69 @@ def staged_env_files(cwd: str) -> list[str]:
     return [f for f in result.stdout.splitlines() if is_env_file(f)]
 
 
+# Árvore de merges (AGENTS.md, "Preservar ramificações"): integrar só com --no-ff.
+# --ff-only sincroniza com o remoto; --abort/--continue/--quit encerram um merge aberto.
+# Só o comando no início do trecho (com -C/-c opcionais): texto que cita "git merge"
+# num heredoc ou num echo não é um merge.
+GIT_PREFIX = r"^\s*(?:\w+=\S*\s+)*git(?:\s+-[cC]\s+\S+)*\s+"
+GIT_MERGE = re.compile(GIT_PREFIX + r"merge\b")
+MERGE_ALLOWED = re.compile(r"(?:^|\s)--(?:no-ff|ff-only|abort|continue|quit)\b")
+GIT_COMMIT = re.compile(r"\bgit\s+commit\b")
+GIT_COMMIT_COMMAND = re.compile(GIT_PREFIX + r"commit\b")
+PROTECTED_BRANCHES = ("main", "dev")
+
+
+def merge_without_no_ff(command: str) -> bool:
+    return any(
+        GIT_MERGE.search(segment) and not MERGE_ALLOWED.search(segment)
+        for segment in SEGMENT_SPLIT.split(command)
+    )
+
+
+def git_output(cwd: str, *args: str) -> str | None:
+    """Saída do git, ou None se o comando falhar (fora de repositório, ref inexistente)."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", cwd, *args], capture_output=True, text=True, timeout=5
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+CD_SEGMENT = re.compile(r"^\s*cd\s+(\S+)\s*$")
+GIT_DASH_C = re.compile(r"\bgit\s+-C\s+(\S+)")
+
+
+def commit_dirs(command: str, cwd: str) -> list[str]:
+    """Pastas onde o comando faz git commit, seguindo `cd x &&` e `git -C x`."""
+    current, dirs = cwd, []
+    for segment in SEGMENT_SPLIT.split(command):
+        if match := CD_SEGMENT.match(segment):
+            current = os.path.join(current, os.path.expanduser(match.group(1).strip("'\"")))
+        elif GIT_COMMIT_COMMAND.search(segment):
+            target = GIT_DASH_C.search(segment)
+            dirs.append(
+                os.path.join(current, os.path.expanduser(target.group(1).strip("'\"")))
+                if target
+                else current
+            )
+    return dirs
+
+
+def direct_commit_branch(cwd: str) -> str | None:
+    """Nome da branch protegida que receberia o commit direto, ou None se pode."""
+    branch = git_output(cwd, "branch", "--show-current")
+    if branch not in PROTECTED_BRANCHES:
+        return None
+    # Passam o commit inicial de um repositório novo e a resolução de um merge.
+    if git_output(cwd, "rev-parse", "--verify", "-q", "HEAD") is None:
+        return None
+    if git_output(cwd, "rev-parse", "--verify", "-q", "MERGE_HEAD") is not None:
+        return None
+    return branch
+
+
 def risky_reason(command: str) -> str | None:
     for segment in SEGMENT_SPLIT.split(command):
         for pattern, reason in RISKY_PATTERNS:
@@ -110,12 +174,30 @@ def check_bash(payload: dict) -> None:
     if GIT_ADD_ENV.search(command):
         respond("deny", ".env nunca entra no git; use .env.example com placeholders.")
         return
-    if re.search(r"\bgit\s+commit\b", command):
-        staged = staged_env_files(payload.get("cwd", "."))
+    if merge_without_no_ff(command):
+        respond(
+            "deny",
+            "Integre com git merge --no-ff <branch> (sem fast-forward nem squash): "
+            "a árvore de merges precisa mostrar o ramo.",
+        )
+        return
+    if GIT_COMMIT.search(command):
+        cwd = payload.get("cwd", ".")
+        staged = staged_env_files(cwd)
         if staged:
             respond(
                 "deny",
                 f"Há .env no stage ({', '.join(staged)}); rode git restore --staged.",
+            )
+            return
+        branches = filter(None, map(direct_commit_branch, commit_dirs(command, cwd)))
+        branch = next(branches, None)
+        if branch:
+            respond(
+                "deny",
+                f"Commit direto em '{branch}' não: crie uma branch curta "
+                "(git switch -c feat/... ou fix/..., chore/..., docs/...) e volte com "
+                f"git merge --no-ff para '{branch}'.",
             )
             return
     reason = risky_reason(command)

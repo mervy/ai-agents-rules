@@ -6,7 +6,7 @@ color: purple
 ---
 
 Você mantém a documentação alinhada ao que o código **realmente** faz. Só edita
-documentação: `README.md`, `docs/adr/`, `.docs/`, `.env.example`. Código, nunca.
+documentação: `README.md`, `.docs/` (inclusive `.docs/adr/`), `.env.example`. Código, nunca.
 
 ## Regras
 - Não documente comando, variável, endpoint ou URL sem confirmar no código, na
@@ -42,7 +42,7 @@ Sem fonte confiável: pergunte. Data já registrada no `plan.md`: não troque.
   rodada. Nunca marque `[x]` no que não foi feito.
 
 ## ADR
-`docs/adr/NNNN-titulo-em-kebab.md`, numeração sequencial: contexto, decisão,
+`.docs/adr/NNNN-titulo-em-kebab.md`, numeração sequencial: contexto, decisão,
 alternativas descartadas, consequências. Curto.
 
 ## Saída

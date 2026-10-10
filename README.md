@@ -47,6 +47,37 @@ Os subagentes não fixam modelo: usam o da sessão. No Claude Code, o modelo esc
 Copilot (VS Code), o do seletor, por exemplo o DeepSeek V4 Pro. O Copilot lê
 `~/.claude/agents` direto e traduz os nomes das ferramentas.
 
+## Merges com histórico de branches
+
+A regra global em `AGENTS.md` exige que toda mudança vá numa branch curta e volte
+com commit de merge, para o `git log --graph` mostrar os ramos. Não precisa de
+subagente: é uma instrução para qualquer assistente, e o hook do Claude Code a
+fiscaliza (veja "Hooks"). Comandos que você roda com `!` não passam pelo hook; nos
+outros agentes (Codex, Copilot) vale só a regra escrita.
+
+Para um merge local, use explicitamente:
+
+```bash
+git merge --no-ff <branch>
+git log --graph --oneline --decorate --all
+git log --merges --oneline
+```
+
+Como padrão adicional do Git para novos merges locais, você pode configurar:
+
+```bash
+git config --global merge.ff false
+```
+
+Essa configuração é um padrão, não um bloqueio: opções explícitas ou configuração
+local podem sobrescrevê-la. Ela não controla merges feitos no GitHub e não cria
+commits quando a branch já está totalmente integrada.
+
+No GitHub, mantenha **Allow merge commits**, desabilite **Allow squash merging**
+e **Allow rebase merging**, e não exija **Require linear history** nas branches
+integradas. Nos PRs, escolha **Create a merge commit**. Alterações remotas pedem
+confirmação antes de aplicar. A regra não muda o histórico existente.
+
 ## Hooks (regras que não dependem da boa vontade do modelo)
 
 `hooks/guard.py` roda antes de cada comando do Claude Code (PreToolUse) e vigia:
@@ -58,6 +89,12 @@ dependências, migrations, `DROP`/`TRUNCATE`/`DELETE` sem `WHERE`, `chmod 777`,
 - Outros modos (auto, acceptEdits...): **nega** e pede que você rode o comando com `!`,
   porque nesses modos uma pergunta não chega até você.
 - `.env` no `git add` ou no stage de um commit: **nega sempre**.
+- Árvore de merges, **nega sempre** e diz o que fazer:
+  - `git merge` sem `--no-ff` (fast-forward ou `--squash`). Passam `--no-ff`,
+    `--ff-only` (sincronizar com o remoto), `--abort`, `--continue` e `--quit`;
+  - `git commit` direto em `dev` ou `main`. Passam o commit inicial de um
+    repositório novo e a conclusão de um merge com conflito.
+  - Só o comando conta: texto que cita "git merge" num heredoc ou `echo` passa.
 
 Testes: `python3 -m unittest discover hooks`.
 
