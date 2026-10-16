@@ -25,28 +25,42 @@
   executado e a saída relevante. Diga também o que **não** foi verificado.
 - Citar as fontes quando a informação vier de pesquisa na web.
 
+## Rígido x opcional
+- **Sempre, em todo projeto**: confirmações de operações destrutivas, segredos fora do
+  repositório, versionamento (`main`/`dev`, branches curtas, merge `--no-ff`), tags,
+  sugestão de release e `.docs/plan.md` + `.docs/tasks.md`.
+- **Opcional (oferecer no final)**: ADR, CI, métricas de tokens, subagentes revisores
+  (`code-reviewer`, `security-reviewer`, `db-reviewer`, revisão cruzada), lint, rota
+  `/health`, orçamento de desempenho e o restante da estrutura de projeto novo. Não faça
+  durante o trabalho; na entrega, liste o que ficou de fora e pergunte se quer agora.
+- Testes seguem o nível combinado (veja "Testes no projeto").
+
 ## Processo de trabalho
 - **Escopo fechado**: no início, defina (ou peça) a lista de arquivos e pastas que podem
   ser alterados. Precisa sair dela? Pergunte.
 - **Conflito de regras**: se um requisito conflita com uma regra, pare e pergunte.
-- **TDD** em código com lógica: teste que falha → confirme a falha → implemente → refatore
-  com a suite verde. Bug começa por um teste que o reproduz.
+- **TDD** em código com lógica (só no nível **completo**, veja "Testes no projeto"):
+  teste que falha → confirme a falha → implemente → refatore com a suite verde. Bug
+  começa por um teste que o reproduz.
 - **Mudanças pequenas**: um PR = uma responsabilidade, idealmente até ~400 linhas
   alteradas (sem lockfiles e gerados).
-- **ADR**: decisão técnica relevante vira `.docs/adr/NNNN-titulo.md` (contexto, decisão,
+- **ADR** (opcional, oferecer no final): decisão técnica relevante vira `.docs/adr/NNNN-titulo.md` (contexto, decisão,
   alternativas descartadas, consequências).
 
 ### QA proporcional à tarefa
+Vale só nos níveis **leve** e **completo** (veja "Testes no projeto"); no nível
+**nenhum**, pule esta seção inteira.
 - **Sem código alterado** (versionar, mover pasta, só docs): nada de suite de QA.
   Confira só o que a tarefa pede (ex.: `.env` fora do commit, segredos no diff).
 - **Durante a implementação**: ciclo rápido, só formatação, lint e os testes da parte
   alterada.
-- **Antes de entregar**: o procedimento completo vai para o subagente `qa-runner`, em
+- **Antes de entregar** (só no nível completo): o procedimento completo vai para o subagente `qa-runner`, em
   segundo plano, enquanto você segue com docs e relatório.
 - **O portão de verdade é o CI**: ele roda o procedimento completo e bloqueia o merge.
 
 ### Subagentes
-Subagente trabalha em contexto separado e devolve só o resumo. Use-o para trabalho
+Opcionais (oferecer no final), exceto o `qa-runner` no nível de testes completo e o
+`docs-writer` para manter `.docs`. Subagente trabalha em contexto separado e devolve só o resumo. Use-o para trabalho
 verboso ou independente; não use para ajustes rápidos que precisam da conversa.
 
 | Subagente | Quando chamar | Pode editar? |
@@ -70,11 +84,12 @@ verboso ou independente; não use para ajustes rápidos que precisam da conversa
 
 ### Definição de pronto
 - [ ] Requisito atendido, dentro do escopo combinado
-- [ ] Testes novos cobrindo a mudança (erro e borda incluídos)
-- [ ] Relatório do `qa-runner` sem falhas (ou etapa marcada "não se aplica" com motivo)
+- [ ] Testes novos cobrindo a mudança, erro e borda incluídos (níveis leve e completo)
+- [ ] Relatório do `qa-runner` sem falhas (só no nível completo)
 - [ ] Imports, dependências, nomes de pacotes e versões conferidos
 - [ ] Sem segredos no diff
-- [ ] README / ADR / `.env.example` atualizados quando a mudança pede
+- [ ] README e `.docs` atualizados (`.env.example` quando a mudança pede)
+- [ ] Opcionais que ficaram de fora listados, com a oferta de fazer agora
 - [ ] Relatório final: o que mudou, como testar, o que foi e o que **não** foi verificado
 
 ## Regras por linguagem
@@ -84,8 +99,9 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
 `cpp.md`, `csharp.md`, `java.md`, `database.md` (SQL e migrations), `testing.md`
 (ao escrever testes).
 
-## Métricas de tokens por sessão
-- **Antes de começar**, crie em `$METRICS_DIR` o arquivo `AAAAMMDD-HHMM-<pasta>.md`
+## Métricas de tokens por sessão (opcional)
+Só se o usuário pedir ou aceitar na oferta do final.
+- Crie em `$METRICS_DIR` o arquivo `AAAAMMDD-HHMM-<pasta>.md`
   (`<pasta>` = nome literal da pasta do projeto, com `_` inicial se houver; agente que
   não é o Claude Code acrescenta `-<agente>`). Linha 1: `AAAA-MM-DD HH:MM`. Linha 2:
   agente + modelo.
@@ -103,6 +119,17 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
   resposta e pergunte se o usuário quer permanecer. Sem resposta = não.
 - Troca para auto no meio da sessão: avise na hora. (O modo é do harness; a obrigação
   é detectar, avisar e perguntar.)
+
+## Testes no projeto
+- **Pergunte no início**, junto com o aviso do modo auto: "Quer testes neste projeto?
+  Nenhum, leve ou completo?" Se o projeto já registrou a resposta, não pergunte de novo.
+  - **Nenhum**: sem testes, sem QA, sem `qa-runner`/revisores, sem checagem de sintaxe.
+    Só o código pedido; o relatório final diz que nada foi verificado.
+  - **Leve**: testes só da parte alterada e lint, sem TDD, sem `qa-runner` nem revisores.
+  - **Completo**: TDD, QA proporcional, `qa-runner` e revisores, como descrito acima.
+- Sem resposta = **leve**.
+- Registre a resposta no `AGENTS.md` (ou README) do projeto, em uma linha
+  (`Testes: nenhum | leve | completo`). O usuário pode mudar o nível a qualquer momento.
 
 ## Operações que sempre pedem confirmação
 - Apagar arquivos, sobrescrever de forma irreversível, encerrar processos, `chmod 777`,
@@ -137,7 +164,7 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
 - **Tag anotada** (`git tag -a vX.Y.Z -m "..."`, SemVer) a cada entrega que chega à
   `main`. Marco relevante (primeira versão funcional, feature grande): **sugira** uma
   release no GitHub/Codeberg com notas; publicar pede confirmação.
-- Produção: `dev` → PR → `main` → deploy automático pelo CI. Nunca editar no servidor.
+- Produção: `dev` → PR → `main` → deploy (automático pelo CI, quando houver). Nunca editar no servidor.
 
 ## Dependências e segredos
 - Dependência nova só se necessária, justificada em uma linha. Lockfile versionado em
@@ -159,7 +186,8 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
   rede; UTF-8 e acentos do português (slug, ordenação, busca).
 - Configuração por variáveis de ambiente; validar as obrigatórias ao subir e falhar cedo.
 - Logs num formato único, sem dados sensíveis; erro ao usuário é genérico.
-- Serviço web: rota `/health` e orçamento de desempenho definido no README.
+- Serviço web (opcional, oferecer no final): rota `/health` e orçamento de desempenho
+  definido no README.
 - Entrada externa: checklist OWASP (validação, injeção, XSS, upload, auth, CSRF, rate
   limit); o detalhe está no `security-reviewer`. Nunca usar credenciais de produção.
 
@@ -179,8 +207,9 @@ carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de edit
   - `.docs/tasks.md`: tudo que está sendo feito, **em ordem**; mudou o plano,
     reordene; terminou, marque `[x]`. Nunca marque o que não foi feito.
 - Projeto novo nasce com estrutura de pastas, README, arquivo de dependências,
-  `.env.example`, instruções de instalar/rodar/testar, testes, lint e CI (com QA antes
-  do deploy). Seguir a convenção da linguagem para lockfiles.
+  `.env.example`, instruções de instalar/rodar e testes conforme o nível. Lint e CI
+  (com QA antes do deploy) são opcionais, oferecidos no final. Seguir a convenção da
+  linguagem para lockfiles.
 
 ## Conteúdo e documentação
 - Artigos e aulas: tom didático, tamanho médio, código com destaque de sintaxe.
