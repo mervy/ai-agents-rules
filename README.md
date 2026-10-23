@@ -1,7 +1,9 @@
 # Regras e subagentes para assistentes de IA
 
 Regras globais para Claude Code, Codex e outros agentes, divididas em três camadas
-para gastar menos contexto e rodar trabalho pesado (QA, revisão) em paralelo.
+para gastar menos contexto e rodar trabalho pesado (revisão) em paralelo.
+Testes são bem básicos (o caminho principal da parte alterada), sem QA no CI/deploy;
+projeto que precisar de mais define no próprio README/AGENTS.md.
 
 | Camada | Onde | Quando carrega |
 |---|---|---|
@@ -15,25 +17,23 @@ A decisão e as alternativas estão em [docs/adr/0001-nucleo-regras-e-subagentes
 
 | Nome | Faz | Edita? |
 |---|---|---|
-| `qa-runner` | Procedimento de QA em 9 etapas, com tabela de evidências | Não |
 | `code-reviewer` | Revisão independente do diff contra os requisitos | Não |
 | `security-reviewer` | OWASP, segredos, autorização, uploads | Não |
 | `db-reviewer` | Schema, migrations, FKs, SQL; nunca executa | Não |
 | `docs-writer` | README, ADR, `.env.example`, `.docs/plan.md` e `tasks.md` | Só docs |
-| `ci-builder` | GitHub Actions com QA antes do deploy | Só CI |
+| `ci-builder` | GitHub Actions de build e deploy, sem testes | Só CI |
 
 Fluxo típico de uma entrega:
 
 ```text
-agente principal implementa (TDD, ciclo rápido de testes)
+agente principal implementa (+ teste básico da parte alterada)
         │
-        ├──► qa-runner          ┐
-        ├──► code-reviewer      ├─ em paralelo, cada um no seu contexto
+        ├──► code-reviewer      ┐  opcionais, em paralelo, cada um no seu contexto
         ├──► security-reviewer  ┘  (db-reviewer se mexeu em banco)
         │
         ├──► docs-writer (README/.docs/ADR)
         ▼
-relatório final ──► PR ──► CI roda o mesmo QA e bloqueia o merge
+relatório final ──► PR ──► merge ──► deploy (sem etapa de testes)
 ```
 
 Revisão cruzada com outro fornecedor (Codex revisando o que o Claude fez, ou o
@@ -95,8 +95,6 @@ dependências, migrations, `DROP`/`TRUNCATE`/`DELETE` sem `WHERE`, `chmod 777`,
   - `git commit` direto em `dev` ou `main`. Passam o commit inicial de um
     repositório novo e a conclusão de um merge com conflito.
   - Só o comando conta: texto que cita "git merge" num heredoc ou `echo` passa.
-
-Testes: `python3 -m unittest discover hooks`.
 
 ## Instalação
 

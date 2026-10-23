@@ -11,10 +11,10 @@ paths:
 - Mínimo de frameworks. Aprovados de imediato: `league/plates` (templates) e
   `vlucas/phpdotenv` (`.env`). Qualquer outro: pergunte antes.
 - PDO com prepared statements; escapar toda saída no template.
-- Ferramentas (só dev): PHPUnit ou Pest nos testes, PHPStan para análise estática,
-  PHP-CS-Fixer (`@PER-CS`) para formatação, Infection para mutação e `composer audit`.
+- Ferramentas (só dev): PHPUnit ou Pest para testes básicos, PHPStan para análise
+  estática, PHP-CS-Fixer (`@PER-CS`) para formatação e `composer audit`.
   Use as que o projeto já tem; ao introduzir uma, justifique e registre no README.
-- `composer.json` com `scripts` para `test`, `lint` e `format`, usados também pelo CI.
+- `composer.json` com `scripts` para `test`, `lint` e `format`.
 - **URLs de conteúdo**: cada projeto define o padrão no próprio README.
 
 ## Recursos modernos (PHP 8.4+; 8.5 instalado)
