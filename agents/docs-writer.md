@@ -18,7 +18,8 @@ documentação: `README.md`, `.docs/` (inclusive `.docs/adr/`), `.env.example`. 
 - Markdown no repositório; HTML só quando o destino é publicação.
 
 ## README
-O que é (legível por quem nunca viu o projeto), **data de início**, status, como
+**Data e hora de início** (`AAAA-MM-DD HH:MM`) no topo; o que é (legível por quem
+nunca viu o projeto), status, como
 instalar, rodar e testar (comandos copiáveis), URL local, URL remota e URL do
 repositório quando existirem, orçamento de desempenho e links para `.docs/`.
 
@@ -33,7 +34,7 @@ com a mais antiga, citando a fonte (e as outras, se divergirem):
 Sem fonte confiável: pergunte. Data já registrada no `plan.md`: não troque.
 
 ## `.docs/` (crie se não existir)
-- `plan.md`: começa com a data de início; o que é, como funciona, para que serve,
+- `plan.md`: começa com a data e hora de início; o que é, como funciona, para que serve,
   features, stack e versão da linguagem, requisitos, escopo e o que fica fora,
   arquitetura, dados, URLs e decisões (inclusive as rejeitadas, com o porquê).
 - `tasks.md`: **tudo** que está sendo feito, na ordem de execução, com checklist

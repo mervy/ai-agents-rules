@@ -173,8 +173,9 @@ Só se o usuário pedir ou aceitar na oferta do final.
   `go.mod`...). Recurso que você não sabe se existe na versão: verifique, não chute.
 - **Documentação viva** em todo projeto, criada no início e mantida a cada entrega
   (detalhes no `docs-writer`):
-  - `.docs/plan.md`: o que é, como funciona, para que serve, features e stack, e a
-    **data de início** (criação do arquivo ou pasta mais antiga; cite a fonte);
+  - **data e hora de início** (`AAAA-MM-DD HH:MM`, da criação do arquivo ou pasta mais
+    antiga; cite a fonte) no topo do `README.md` e do `.docs/plan.md`;
+  - `.docs/plan.md`: o que é, como funciona, para que serve, features e stack;
   - `.docs/tasks.md`: tudo que está sendo feito, **em ordem**; mudou o plano,
     reordene; terminou, marque `[x]`. Nunca marque o que não foi feito.
 - Projeto novo nasce com estrutura de pastas, README, arquivo de dependências,
