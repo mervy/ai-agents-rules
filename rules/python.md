@@ -10,8 +10,7 @@ paths:
 - Type hints, `ruff` (lint + format), `pathlib`, f-strings.
 - Nunca `except:` nu; capture a exceção específica.
 - Biblioteca padrão primeiro; `requests`/`httpx` sempre com `timeout=`.
-- Testes com `pytest`; propriedade com Hypothesis; mutação com `mutmut`; auditoria com
-  `pip-audit`.
+- Testes básicos com `pytest`; auditoria com `pip-audit`.
 
 ## Recursos modernos (3.13 no WSL, 3.14 no Windows)
 Declare `requires-python = ">=3.12"` e prefira:

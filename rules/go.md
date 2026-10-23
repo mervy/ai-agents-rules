@@ -20,5 +20,5 @@ paths:
 - Rotas com método e parâmetro: `mux.HandleFunc("GET /items/{id}", h)` + `r.PathValue("id")`.
 - Iteradores (`range` sobre funções), pacotes `slices`, `maps` e `cmp`
   (`slices.Sorted(maps.Keys(m))`), `min`/`max`/`clear` nativos, `errors.Join`.
-- Testes: `b.Loop()` em benchmarks, `t.Context()`; ferramentas com a diretiva `tool`
+- Testes: `t.Context()`; ferramentas com a diretiva `tool`
   no `go.mod`; `sync.WaitGroup.Go()`; `os.Root` para acesso restrito a uma pasta.

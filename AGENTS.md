@@ -7,7 +7,7 @@
 - O resto fica ao lado, na mesma pasta (veja o `README.md`):
   - `rules/<linguagem>.md`: convenções por linguagem, lidas só quando a tarefa toca
     aqueles arquivos;
-  - `agents/<nome>.md`: subagentes com contexto próprio, para QA, revisão e documentação.
+  - `agents/<nome>.md`: subagentes com contexto próprio, para revisão e documentação.
 - Versionado em repositório público: nada de segredos, dados pessoais, caminhos da
   máquina ou nomes de projetos. Regra de um projeto só vai no README/AGENTS.md dele.
 - **Valores locais** ficam no `.env` desta pasta (não versionado) e aparecem aqui como
@@ -33,39 +33,25 @@
   (`code-reviewer`, `security-reviewer`, `db-reviewer`, revisão cruzada), lint, rota
   `/health`, orçamento de desempenho e o restante da estrutura de projeto novo. Não faça
   durante o trabalho; na entrega, liste o que ficou de fora e pergunte se quer agora.
-- Testes seguem o nível combinado (veja "Testes no projeto").
+- **Testes bem básicos**: só o essencial da parte alterada (o caminho principal
+  funciona), rodando localmente. Sem TDD, cobertura, mutação, suite de QA nem testes no
+  CI/deploy. Se um projeto precisar de mais, a regra fica no README/AGENTS.md dele.
 
 ## Processo de trabalho
 - **Escopo fechado**: no início, defina (ou peça) a lista de arquivos e pastas que podem
   ser alterados. Precisa sair dela? Pergunte.
 - **Conflito de regras**: se um requisito conflita com uma regra, pare e pergunte.
-- **TDD** em código com lógica (só no nível **completo**, veja "Testes no projeto"):
-  teste que falha → confirme a falha → implemente → refatore com a suite verde. Bug
-  começa por um teste que o reproduz.
 - **Mudanças pequenas**: um PR = uma responsabilidade, idealmente até ~400 linhas
   alteradas (sem lockfiles e gerados).
 - **ADR** (opcional, oferecer no final): decisão técnica relevante vira `.docs/adr/NNNN-titulo.md` (contexto, decisão,
   alternativas descartadas, consequências).
 
-### QA proporcional à tarefa
-Vale só nos níveis **leve** e **completo** (veja "Testes no projeto"); no nível
-**nenhum**, pule esta seção inteira.
-- **Sem código alterado** (versionar, mover pasta, só docs): nada de suite de QA.
-  Confira só o que a tarefa pede (ex.: `.env` fora do commit, segredos no diff).
-- **Durante a implementação**: ciclo rápido, só formatação, lint e os testes da parte
-  alterada.
-- **Antes de entregar** (só no nível completo): o procedimento completo vai para o subagente `qa-runner`, em
-  segundo plano, enquanto você segue com docs e relatório.
-- **O portão de verdade é o CI**: ele roda o procedimento completo e bloqueia o merge.
-
 ### Subagentes
-Opcionais (oferecer no final), exceto o `qa-runner` no nível de testes completo e o
-`docs-writer` para manter `.docs`. Subagente trabalha em contexto separado e devolve só o resumo. Use-o para trabalho
+Opcionais (oferecer no final), exceto o `docs-writer` para manter `.docs`. Subagente trabalha em contexto separado e devolve só o resumo. Use-o para trabalho
 verboso ou independente; não use para ajustes rápidos que precisam da conversa.
 
 | Subagente | Quando chamar | Pode editar? |
 |---|---|---|
-| `qa-runner` | Antes de entregar código: procedimento completo de QA | Não |
 | `code-reviewer` | Mudança não trivial: revisão independente (diff + requisitos) | Não |
 | `security-reviewer` | Mudança que toca entrada externa, auth, upload, segredos | Não |
 | `db-reviewer` | Schema, migration, FK ou SQL novo | Não |
@@ -74,7 +60,7 @@ verboso ou independente; não use para ajustes rápidos que precisam da conversa
 
 - Passe sempre: objetivo, requisitos, escopo (arquivos) e a branch/diff de base. O
   subagente **não vê a conversa**.
-- Revisões e QA são independentes: rode em **paralelo**.
+- Revisões são independentes: rode em **paralelo**.
 - Revisão cruzada (outro fornecedor de IA) em mudança grande: `codex exec review --base <branch>`.
 - Subagente **nunca** autoriza operação destrutiva, push, deploy ou migration: ele
   aponta, o agente principal pergunta ao usuário.
@@ -84,8 +70,6 @@ verboso ou independente; não use para ajustes rápidos que precisam da conversa
 
 ### Definição de pronto
 - [ ] Requisito atendido, dentro do escopo combinado
-- [ ] Testes novos cobrindo a mudança, erro e borda incluídos (níveis leve e completo)
-- [ ] Relatório do `qa-runner` sem falhas (só no nível completo)
 - [ ] Imports, dependências, nomes de pacotes e versões conferidos
 - [ ] Sem segredos no diff
 - [ ] README e `.docs` atualizados (`.env.example` quando a mudança pede)
@@ -96,8 +80,7 @@ verboso ou independente; não use para ajustes rápidos que precisam da conversa
 Ao ler ou editar arquivos de uma linguagem, siga `rules/<arquivo>` (no Claude Code
 carregam sozinhas pelo `paths`; nos outros agentes, leia o arquivo antes de editar):
 `php.md`, `javascript.md`, `frontend.md`, `python.md`, `go.md`, `rust.md`, `c.md`,
-`cpp.md`, `csharp.md`, `java.md`, `database.md` (SQL e migrations), `testing.md`
-(ao escrever testes).
+`cpp.md`, `csharp.md`, `java.md`, `database.md` (SQL e migrations).
 
 ## Métricas de tokens por sessão (opcional)
 Só se o usuário pedir ou aceitar na oferta do final.
@@ -119,17 +102,6 @@ Só se o usuário pedir ou aceitar na oferta do final.
   resposta e pergunte se o usuário quer permanecer. Sem resposta = não.
 - Troca para auto no meio da sessão: avise na hora. (O modo é do harness; a obrigação
   é detectar, avisar e perguntar.)
-
-## Testes no projeto
-- **Pergunte no início**, junto com o aviso do modo auto: "Quer testes neste projeto?
-  Nenhum, leve ou completo?" Se o projeto já registrou a resposta, não pergunte de novo.
-  - **Nenhum**: sem testes, sem QA, sem `qa-runner`/revisores, sem checagem de sintaxe.
-    Só o código pedido; o relatório final diz que nada foi verificado.
-  - **Leve**: testes só da parte alterada e lint, sem TDD, sem `qa-runner` nem revisores.
-  - **Completo**: TDD, QA proporcional, `qa-runner` e revisores, como descrito acima.
-- Sem resposta = **leve**.
-- Registre a resposta no `AGENTS.md` (ou README) do projeto, em uma linha
-  (`Testes: nenhum | leve | completo`). O usuário pode mudar o nível a qualquer momento.
 
 ## Operações que sempre pedem confirmação
 - Apagar arquivos, sobrescrever de forma irreversível, encerrar processos, `chmod 777`,
@@ -177,8 +149,7 @@ Só se o usuário pedir ou aceitar na oferta do final.
   tem `.env.example`.
 
 ## Código — regras gerais
-- KISS, YAGNI, SOLID com bom senso: interface só com mais de uma implementação real ou
-  necessidade concreta de teste.
+- KISS, YAGNI, SOLID com bom senso: interface só com mais de uma implementação real.
 - Nomes claros, funções curtas, sem código morto; código completo, sem `...` ou
   "implemente aqui".
 - Identificadores em inglês; comentários em português, só para o **porquê**.
@@ -207,9 +178,8 @@ Só se o usuário pedir ou aceitar na oferta do final.
   - `.docs/tasks.md`: tudo que está sendo feito, **em ordem**; mudou o plano,
     reordene; terminou, marque `[x]`. Nunca marque o que não foi feito.
 - Projeto novo nasce com estrutura de pastas, README, arquivo de dependências,
-  `.env.example`, instruções de instalar/rodar e testes conforme o nível. Lint e CI
-  (com QA antes do deploy) são opcionais, oferecidos no final. Seguir a convenção da
-  linguagem para lockfiles.
+  `.env.example` e instruções de instalar/rodar. Lint e CI são opcionais, oferecidos
+  no final. Seguir a convenção da linguagem para lockfiles.
 
 ## Conteúdo e documentação
 - Artigos e aulas: tom didático, tamanho médio, código com destaque de sintaxe.
